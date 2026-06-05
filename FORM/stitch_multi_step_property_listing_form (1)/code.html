@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-on-surface": "#eff1f3",
+                    "on-tertiary-fixed": "#001a42",
+                    "outline": "#76777d",
+                    "secondary-container": "#d5e3fd",
+                    "secondary-fixed-dim": "#b9c7e0",
+                    "surface-bright": "#f7f9fb",
+                    "on-primary-fixed": "#131b2e",
+                    "surface-container-highest": "#e0e3e5",
+                    "surface-dim": "#d8dadc",
+                    "tertiary": "#000000",
+                    "on-primary-container": "#7c839b",
+                    "on-secondary-fixed-variant": "#3a485c",
+                    "background": "#f7f9fb",
+                    "on-tertiary-container": "#3980f4",
+                    "on-surface-variant": "#45464d",
+                    "on-primary-fixed-variant": "#3f465c",
+                    "on-primary": "#ffffff",
+                    "primary-fixed-dim": "#bec6e0",
+                    "tertiary-container": "#001a42",
+                    "on-secondary-fixed": "#0d1c2f",
+                    "on-background": "#191c1e",
+                    "secondary-fixed": "#d5e3fd",
+                    "tertiary-fixed-dim": "#adc6ff",
+                    "on-error": "#ffffff",
+                    "surface-container-low": "#f2f4f6",
+                    "surface": "#f7f9fb",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "inverse-primary": "#bec6e0",
+                    "tertiary-fixed": "#d8e2ff",
+                    "primary-container": "#131b2e",
+                    "primary-fixed": "#dae2fd",
+                    "on-secondary-container": "#57657b",
+                    "surface-container": "#eceef0",
+                    "surface-variant": "#e0e3e5",
+                    "inverse-surface": "#2d3133",
+                    "secondary": "#515f74",
+                    "surface-container-high": "#e6e8ea",
+                    "primary": "#000000",
+                    "on-tertiary-fixed-variant": "#004395",
+                    "surface-container-lowest": "#ffffff",
+                    "on-surface": "#191c1e",
+                    "error": "#ba1a1a",
+                    "surface-tint": "#565e74",
+                    "error-container": "#ffdad6",
+                    "on-error-container": "#93000a",
+                    "outline-variant": "#c6c6cd"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "stack-md": "24px",
+                    "container-max": "1200px",
+                    "base": "8px",
+                    "gutter": "24px",
+                    "margin-mobile": "16px",
+                    "margin-desktop": "40px",
+                    "stack-sm": "12px",
+                    "stack-lg": "48px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Hanken Grotesk"],
+                    "headline-lg": ["Hanken Grotesk"],
+                    "label-sm": ["Inter"],
+                    "label-md": ["Inter"],
+                    "title-md": ["Hanken Grotesk"],
+                    "display-lg": ["Hanken Grotesk"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "title-md": ["20px", {"lineHeight": "28px", "fontWeight": "500"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .step-content { display: none; }
+        .step-content.active { display: block; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #3980f4 !important; /* tertiary blue logic */
+            box-shadow: 0 0 0 1px #3980f4;
+        }
+        .form-section-card {
+            background-color: #ffffff;
+            border: 1px solid #e0e3e5;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md">
+<!-- TopAppBar Shell -->
+<header class="bg-surface-lowest dark:bg-surface-container-lowest text-primary dark:text-inverse-primary border-b border-outline-variant dark:border-outline w-full sticky top-0 z-50">
+<div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop h-16 w-full max-w-container-max mx-auto">
+<button class="active:opacity-80 transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">close</span>
+</button>
+<h1 class="font-title-md text-title-md font-bold">List Property</h1>
+<button class="text-primary dark:text-inverse-primary font-bold hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors px-3 py-1 rounded">
+                Save Draft
+            </button>
+</div>
+</header>
+<main class="max-w-container-max mx-auto px-margin-mobile py-stack-md pb-32">
+<!-- Progress Indicator -->
+<div class="mb-stack-md">
+<div class="flex justify-between items-end mb-2">
+<span class="font-label-md text-label-md text-on-surface-variant" id="step-count-text">Step 1 of 7</span>
+<span class="font-label-sm text-label-sm text-primary font-bold" id="step-title">Listing Basics</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full transition-all duration-300" id="progress-bar" style="width: 14.28%;"></div>
+</div>
+</div>
+<form class="space-y-stack-md" id="listing-form">
+<!-- Step 1: Listing Basics -->
+<div class="step-content active animate-in fade-in slide-in-from-bottom-4 duration-500" id="step-1">
+<div class="form-section-card p-margin-mobile rounded-xl space-y-stack-sm">
+<label class="font-label-md text-label-md text-on-surface-variant">Are you Selling or Renting?</label>
+<div class="grid grid-cols-2 gap-gutter">
+<label class="relative flex items-center justify-center p-4 border border-outline-variant rounded-lg cursor-pointer hover:border-primary transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary-fixed">
+<input checked="" class="hidden peer" name="listing_type" type="radio" value="sell"/>
+<span class="font-label-md text-label-md peer-checked:text-primary">Sell</span>
+</label>
+<label class="relative flex items-center justify-center p-4 border border-outline-variant rounded-lg cursor-pointer hover:border-primary transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary-fixed">
+<input class="hidden peer" name="listing_type" type="radio" value="rent"/>
+<span class="font-label-md text-label-md peer-checked:text-primary">Rent</span>
+</label>
+</div>
+<div class="pt-stack-sm">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Property Type</label>
+<select class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest text-body-md">
+<option>House</option>
+<option>Condo</option>
+<option>Townhouse</option>
+<option>Land</option>
+</select>
+</div>
+<div class="pt-stack-sm">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Listing Title</label>
+<input class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest text-body-md" placeholder="e.g. Modern Minimalist Condo near BTS" type="text"/>
+</div>
+<div class="pt-stack-sm">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">I am an...</label>
+<div class="space-y-2">
+<label class="flex items-center space-x-3 p-3 border border-outline-variant rounded-lg cursor-pointer has-[:checked]:border-primary">
+<input checked="" class="w-5 h-5 accent-tertiary-fixed-dim" name="poster_type" type="radio"/>
+<span class="font-body-md">Owner</span>
+</label>
+<label class="flex items-center space-x-3 p-3 border border-outline-variant rounded-lg cursor-pointer has-[:checked]:border-primary">
+<input class="w-5 h-5 accent-tertiary-fixed-dim" name="poster_type" type="radio"/>
+<span class="font-body-md">Agent</span>
+</label>
+</div>
+</div>
+</div>
+</div>
+<!-- Step 2: Project & Building -->
+<div class="step-content animate-in fade-in slide-in-from-bottom-4 duration-500" id="step-2">
+<div class="form-section-card p-margin-mobile rounded-xl space-y-stack-sm">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Project Name (EN)</label>
+<input class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest" placeholder="The Stitch Residences" type="text"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Project Name (TH)</label>
+<input class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest" placeholder="เดอะ สติทช์ เรสซิเดนซ์" type="text"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Developer</label>
+<input class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest" placeholder="Sansiri, AP, etc." type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Tenure</label>
+<select class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest">
+<option>Freehold</option>
+<option>Leasehold</option>
+</select>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Year Completed</label>
+<input class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest" placeholder="2024" type="number"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Step 3: Unit & Space -->
+<div class="step-content animate-in fade-in slide-in-from-bottom-4 duration-500" id="step-3">
+<div class="form-section-card p-margin-mobile rounded-xl space-y-stack-sm">
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Floor No.</label>
+<input class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest" placeholder="12A" type="text"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Usable Area (sq.m)</label>
+<input class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest" placeholder="45" type="number"/>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Bedrooms</label>
+<select class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest">
+<option>Studio</option>
+<option>1</option>
+<option>2</option>
+<option>3</option>
+<option>4+</option>
+</select>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Bathrooms</label>
+<select class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest">
+<option>1</option>
+<option>2</option>
+<option>3+</option>
+</select>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Parking</label>
+<select class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest">
+<option>1</option>
+<option>2</option>
+<option>None</option>
+</select>
+</div>
+</div>
+</div>
+</div>
+<!-- Step 4: Location -->
+<div class="step-content animate-in fade-in slide-in-from-bottom-4 duration-500" id="step-4">
+<div class="form-section-card p-margin-mobile rounded-xl space-y-stack-sm">
+<div class="space-y-stack-sm">
+<select class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest"><option>Province: Bangkok</option></select>
+<select class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest"><option>District: Watthana</option></select>
+<select class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest"><option>Sub-district: Khlong Tan Nuea</option></select>
+<textarea class="w-full p-4 border border-outline-variant rounded-lg bg-surface-lowest h-24" placeholder="Specific Address / House No."></textarea>
+</div>
+<div class="mt-4 h-48 rounded-lg overflow-hidden bg-surface-container border border-outline-variant flex items-center justify-center">
+<img class="w-full h-full object-cover" data-alt="A clean, minimalist vector map representation of a central Bangkok district with high-contrast lines for roads and subtle grey tones for buildings. The aesthetic is modern and professional, following a light-mode corporate design language with clear iconography for landmarks. The lighting is bright and even, conveying a sense of precision and urban organization." data-location="Bangkok" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGtmtAuNuKaa8Eb_7ycGO6TUBZt-IG7PMWldVtv68ueRz-aHHB-NtlQNFYWIabMJol9IAW_ODvDUrUbw-_mmyXdM3UsL9BjTxMj5qelkMHrvG3izh0k6fOjBQgUz_fTPOumFS6DXZDwu2Sd7PbsZTjAdjsc5DdXnMCgwUUD4V2Nq-SqahUD6gtxLPbucM6iS56cIU35_B3UW-Ge9xC7F1LDXYxJNWi2wOLn6GN9WE5YsUH73LnCas92MO78zfC1zKaBl0bayIUkss"/>
+</div>
+</div>
+</div>
+<!-- Step 5: Amenities -->
+<div class="step-content animate-in fade-in slide-in-from-bottom-4 duration-500" id="step-5">
+<div class="form-section-card p-margin-mobile rounded-xl space-y-stack-sm">
+<label class="font-label-md text-label-md text-on-surface-variant block">Decoration</label>
+<div class="flex flex-wrap gap-2">
+<button class="px-4 py-2 border border-outline-variant rounded-full text-label-md hover:bg-primary hover:text-white transition-all" type="button">Bare Shell</button>
+<button class="px-4 py-2 border border-primary bg-primary text-white rounded-full text-label-md" type="button">Fully Furnished</button>
+<button class="px-4 py-2 border border-outline-variant rounded-full text-label-md hover:bg-primary hover:text-white transition-all" type="button">Partially</button>
+</div>
+<div class="pt-stack-sm">
+<label class="font-label-md text-label-md text-on-surface-variant block mb-3">Unit Facilities</label>
+<div class="grid grid-cols-2 gap-3">
+<label class="flex items-center space-x-2"><input class="w-5 h-5 rounded border-outline-variant text-tertiary-fixed-dim" type="checkbox"/> <span class="text-body-md">Air Con</span></label>
+<label class="flex items-center space-x-2"><input class="w-5 h-5 rounded border-outline-variant text-tertiary-fixed-dim" type="checkbox"/> <span class="text-body-md">Bathtub</span></label>
+<label class="flex items-center space-x-2"><input class="w-5 h-5 rounded border-outline-variant text-tertiary-fixed-dim" type="checkbox"/> <span class="text-body-md">Washing Machine</span></label>
+<label class="flex items-center space-x-2"><input class="w-5 h-5 rounded border-outline-variant text-tertiary-fixed-dim" type="checkbox"/> <span class="text-body-md">Water Heater</span></label>
+</div>
+</div>
+</div>
+</div>
+<!-- Step 6: Pricing & Finance -->
+<div class="step-content animate-in fade-in slide-in-from-bottom-4 duration-500" id="step-6">
+<div class="form-section-card p-margin-mobile rounded-xl space-y-stack-sm">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Net Price (THB)</label>
+<div class="relative">
+<input class="w-full h-12 pl-12 pr-4 border border-outline-variant rounded-lg bg-surface-lowest font-bold text-lg" id="net-price" placeholder="5,000,000" type="number"/>
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant font-bold">฿</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Common Fee (p.m)</label>
+<input class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest" placeholder="2,500" type="number"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Down Payment (%)</label>
+<input class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest" id="down-payment-percent" type="number" value="10"/>
+</div>
+</div>
+<!-- Real-time Logic Component -->
+<div class="bg-surface-container-low p-4 rounded-lg border border-primary-container/10 mt-4 space-y-3">
+<div class="flex justify-between items-center">
+<span class="text-label-md text-on-surface-variant">Recommended Down Payment</span>
+<span class="font-bold text-primary" id="calc-down-payment">฿ 0</span>
+</div>
+<div class="h-px bg-outline-variant/30"></div>
+<div class="flex justify-between items-center">
+<span class="text-label-md text-on-surface-variant">Est. Monthly Installment*</span>
+<span class="font-bold text-primary" id="calc-monthly">฿ 0</span>
+</div>
+<p class="text-[10px] text-outline text-right">*Based on 4% interest over 30 years</p>
+</div>
+</div>
+</div>
+<!-- Step 7: Media & Contact -->
+<div class="step-content animate-in fade-in slide-in-from-bottom-4 duration-500" id="step-7">
+<div class="form-section-card p-margin-mobile rounded-xl space-y-stack-sm">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Description</label>
+<textarea class="w-full p-4 border border-outline-variant rounded-lg bg-surface-lowest h-32" placeholder="Describe your property highlights..."></textarea>
+</div>
+<div class="pt-stack-sm">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Upload Photos</label>
+<div class="grid grid-cols-3 gap-2">
+<button class="aspect-square border-2 border-dashed border-outline-variant rounded-lg flex flex-col items-center justify-center bg-surface-container-lowest hover:border-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-outline">add_a_photo</span>
+<span class="text-[10px] text-outline mt-1">Main</span>
+</button>
+<div class="aspect-square rounded-lg bg-surface-container overflow-hidden">
+<img class="w-full h-full object-cover opacity-50" data-alt="A brightly lit, minimalist living room with floor-to-ceiling windows showing a lush tropical garden. The interior features high-quality wooden flooring, a clean white sofa, and subtle architectural details. The overall vibe is calm and premium, using a neutral color palette with soft morning light filtering through thin curtains." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAges1_4TFiQthT7kBs8-HpG0IAdSEbpQc_glC-wMiS5Og3ZLcaO4IccUqIigjzaWKDQJliDih0Q1tAS9o5RrvlL0jnMC7k3W6u22hVVmypOjfAM_cyrIJV9ah_vErYStCzM_hktnpTNT-z2YbUg-hFXl9e-FwXqTjuNL0hGj8FYZzy5ls2YKBhI0qZe5dRt6aqqLTJgqdvrAuBoGhdCQcJ2nDAGdYAcjaiJYpdDJDxZf3XCPQsKvTzHYtNklURpCJFYCysEubKLAs"/>
+</div>
+<div class="aspect-square rounded-lg bg-surface-container overflow-hidden">
+<img class="w-full h-full object-cover opacity-50" data-alt="A modern kitchen with sleek dark cabinetry and high-end built-in appliances. The countertops are made of pristine white marble, creating a sharp contrast. The lighting is focused and warm, highlighting the clean textures and sophisticated craftsmanship. This visual represents a high-end urban apartment lifestyle." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKHfwSXOvlyEp4y4fVOHcqL0oxoXDrD6_m7nBftmX3akBXPMF_IgSs5MeZHTjEWg8gZO18FQD_-dSD9KzIDw-E2UAC8lQC_X7Snu35Zi3UMhfjK6p2d34PqnIIbU0UUFoF3voR68hMfGlx01y_sjNekH7VfrDB-P8w9Rv5genBceG7DG3jCDCRr58fYUIhqLCoN1w6UlQIo45rNYb0VlmSHvboxOL3vlNNm_hfgPhKzBrifl0n55Vws1VAhcrVDgW4evyE5ZM6YJ4"/>
+</div>
+</div>
+</div>
+<div class="pt-stack-sm space-y-3">
+<div class="flex items-center border border-outline-variant rounded-lg bg-surface-lowest px-4">
+<span class="material-symbols-outlined text-outline mr-2">person</span>
+<input class="flex-1 h-12 border-none focus:ring-0" placeholder="Contact Name" type="text"/>
+</div>
+<div class="flex items-center border border-outline-variant rounded-lg bg-surface-lowest px-4">
+<span class="material-symbols-outlined text-outline mr-2">call</span>
+<input class="flex-1 h-12 border-none focus:ring-0" placeholder="Phone Number" type="tel"/>
+</div>
+<div class="flex items-center border border-outline-variant rounded-lg bg-surface-lowest px-4">
+<span class="material-symbols-outlined text-outline mr-2">chat</span>
+<input class="flex-1 h-12 border-none focus:ring-0" placeholder="Line ID (Optional)" type="text"/>
+</div>
+</div>
+</div>
+</div>
+</form>
+<!-- Navigation Actions -->
+<div class="fixed bottom-20 left-0 w-full px-margin-mobile flex gap-4 z-40">
+<button class="hidden flex-1 h-14 bg-surface-container-high text-on-surface font-bold rounded-lg border border-outline-variant active:scale-95 transition-transform" id="prev-btn">
+                Back
+            </button>
+<button class="flex-[2] h-14 bg-primary text-on-primary font-bold rounded-lg active:scale-95 transition-transform" id="next-btn">
+                Next
+            </button>
+</div>
+</main>
+<!-- BottomNavBar Shell -->
+<nav class="fixed bottom-0 w-full flex justify-around items-center py-2 px-margin-mobile bg-surface-lowest dark:bg-surface-container-lowest border-t border-outline-variant dark:border-outline z-50">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:text-primary dark:hover:text-inverse-primary active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-sm text-label-sm">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary dark:text-inverse-primary font-bold hover:text-primary dark:hover:text-inverse-primary active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">list_alt</span>
+<span class="font-label-sm text-label-sm">My Listings</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:text-primary dark:hover:text-inverse-primary active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">chat_bubble</span>
+<span class="font-label-sm text-label-sm">Messages</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:text-primary dark:hover:text-inverse-primary active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</a>
+</nav>
+<script>
+        const steps = 7;
+        let currentStep = 1;
+
+        const nextBtn = document.getElementById('next-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const stepCountText = document.getElementById('step-count-text');
+        const stepTitleText = document.getElementById('step-title');
+
+        const stepTitles = [
+            "Listing Basics",
+            "Project & Building",
+            "Unit & Space",
+            "Location",
+            "Amenities",
+            "Pricing & Finance",
+            "Media & Contact"
+        ];
+
+        function updateUI() {
+            // Hide all steps
+            document.querySelectorAll('.step-content').forEach(s => s.classList.remove('active'));
+            // Show current step
+            document.getElementById(`step-${currentStep}`).classList.add('active');
+
+            // Progress Bar
+            const progress = (currentStep / steps) * 100;
+            progressBar.style.width = `${progress}%`;
+
+            // Text Updates
+            stepCountText.textContent = `Step ${currentStep} of ${steps}`;
+            stepTitleText.textContent = stepTitles[currentStep - 1];
+
+            // Button visibility
+            if (currentStep === 1) {
+                prevBtn.classList.add('hidden');
+            } else {
+                prevBtn.classList.remove('hidden');
+            }
+
+            if (currentStep === steps) {
+                nextBtn.textContent = "Publish Listing";
+                nextBtn.classList.replace('bg-primary', 'bg-tertiary-fixed-dim');
+                nextBtn.classList.replace('text-on-primary', 'text-on-tertiary-fixed');
+            } else {
+                nextBtn.textContent = "Next";
+                nextBtn.classList.replace('bg-tertiary-fixed-dim', 'bg-primary');
+                nextBtn.classList.replace('text-on-tertiary-fixed', 'text-on-primary');
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        nextBtn.addEventListener('click', () => {
+            if (currentStep < steps) {
+                currentStep++;
+                updateUI();
+            } else {
+                alert("Listing Published Successfully!");
+            }
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentStep > 1) {
+                currentStep--;
+                updateUI();
+            }
+        });
+
+        // Real-time calculation logic for Pricing (Step 6)
+        const netPriceInput = document.getElementById('net-price');
+        const downPercentInput = document.getElementById('down-payment-percent');
+        const calcDownDisplay = document.getElementById('calc-down-payment');
+        const calcMonthlyDisplay = document.getElementById('calc-monthly');
+
+        function calculateFinance() {
+            const price = parseFloat(netPriceInput.value) || 0;
+            const percent = parseFloat(downPercentInput.value) || 10;
+            
+            // Down payment
+            const downVal = price * (percent / 100);
+            calcDownDisplay.textContent = `฿ ${downVal.toLocaleString()}`;
+
+            // Monthly (simplified amortization: M = P [ i(1 + i)^n ] / [ (1 + i)^n – 1 ])
+            const principal = price - downVal;
+            const annualInterest = 0.04;
+            const monthlyInterest = annualInterest / 12;
+            const months = 30 * 12;
+
+            if (principal > 0) {
+                const monthlyPayment = principal * (monthlyInterest * Math.pow(1 + monthlyInterest, months)) / (Math.pow(1 + monthlyInterest, months) - 1);
+                calcMonthlyDisplay.textContent = `฿ ${Math.round(monthlyPayment).toLocaleString()}`;
+            } else {
+                calcMonthlyDisplay.textContent = `฿ 0`;
+            }
+        }
+
+        netPriceInput.addEventListener('input', calculateFinance);
+        downPercentInput.addEventListener('input', calculateFinance);
+    </script>
+</body></html>

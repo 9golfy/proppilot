@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Use Lucide Icons via CDN -->
+<script src="https://unpkg.com/lucide@latest"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-error": "#ffffff",
+                    "surface-tint": "#565e74",
+                    "primary-container": "#131b2e",
+                    "outline": "#76777d",
+                    "tertiary-fixed": "#d8e2ff",
+                    "surface-bright": "#f7f9fb",
+                    "on-secondary-fixed": "#0d1c2f",
+                    "inverse-surface": "#2d3133",
+                    "outline-variant": "#c6c6cd",
+                    "on-tertiary-container": "#3980f4",
+                    "on-surface-variant": "#45464d",
+                    "on-tertiary": "#ffffff",
+                    "surface-container-low": "#f2f4f6",
+                    "tertiary-fixed-dim": "#adc6ff",
+                    "on-secondary": "#ffffff",
+                    "tertiary": "#000000",
+                    "surface-container-high": "#e6e8ea",
+                    "on-primary-container": "#7c839b",
+                    "surface-container-lowest": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "surface-container": "#eceef0",
+                    "primary-fixed-dim": "#bec6e0",
+                    "tertiary-container": "#001a42",
+                    "on-primary": "#ffffff",
+                    "surface": "#f7f9fb",
+                    "on-tertiary-fixed": "#001a42",
+                    "secondary-fixed-dim": "#b9c7e0",
+                    "secondary": "#515f74",
+                    "on-secondary-container": "#57657b",
+                    "error": "#ba1a1a",
+                    "primary-fixed": "#dae2fd",
+                    "primary": "#000000",
+                    "error-container": "#ffdad6",
+                    "surface-variant": "#e0e3e5",
+                    "secondary-container": "#d5e3fd",
+                    "on-secondary-fixed-variant": "#3a485c",
+                    "secondary-fixed": "#d5e3fd",
+                    "on-tertiary-fixed-variant": "#004395",
+                    "inverse-on-surface": "#eff1f3",
+                    "on-primary-fixed": "#131b2e",
+                    "background": "#f7f9fb",
+                    "on-primary-fixed-variant": "#3f465c",
+                    "inverse-primary": "#bec6e0",
+                    "on-background": "#191c1e",
+                    "on-surface": "#191c1e",
+                    "surface-dim": "#d8dadc",
+                    "surface-container-highest": "#e0e3e5"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "stack-sm": "12px",
+                    "stack-md": "24px",
+                    "gutter": "24px",
+                    "container-max": "1200px",
+                    "base": "8px",
+                    "margin-mobile": "16px",
+                    "margin-desktop": "40px",
+                    "stack-lg": "48px"
+            },
+            "fontFamily": {
+                    "title-md": ["Hanken Grotesk"],
+                    "headline-lg-mobile": ["Hanken Grotesk"],
+                    "headline-lg": ["Hanken Grotesk"],
+                    "body-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "body-md": ["Inter"],
+                    "display-lg": ["Hanken Grotesk"],
+                    "label-sm": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #000 !important;
+            box-shadow: 0 0 0 1px #000;
+        }
+        .form-section-card {
+            background-color: #ffffff;
+            border: 1px solid #e0e3e5;
+        }
+        .suggestion-chip {
+            @apply px-4 py-1.5 rounded-full border border-outline-variant text-label-sm bg-surface-lowest hover:border-primary transition-colors cursor-pointer;
+        }
+        .toggle-checkbox:checked {
+            @apply right-0 border-primary bg-primary;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            @apply bg-primary;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen">
+<!-- TopAppBar Shell -->
+<header class="bg-surface-lowest border-b border-outline-variant w-full sticky top-0 z-50">
+<div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop h-16 w-full max-w-container-max mx-auto">
+<button class="active:opacity-80 transition-all">
+<i class="text-on-surface-variant" data-lucide="x"></i>
+</button>
+<h1 class="font-title-md text-title-md font-bold">ลงขายอสังหาริมทรัพย์</h1>
+<button class="text-primary font-bold hover:bg-surface-container-low transition-colors px-3 py-1 rounded">
+                บันทึกร่าง
+            </button>
+</div>
+</header>
+<main class="max-w-container-max mx-auto px-margin-mobile py-stack-md pb-40">
+<form class="space-y-stack-md" id="listing-form">
+<!-- 1. Image Upload Section (ใส่รูปภาพ) -->
+<section class="form-section-card p-margin-mobile rounded-xl">
+<h2 class="font-title-md text-title-md font-bold mb-4">ใส่รูปภาพ (สูงสุด 20 รูป)</h2>
+<div class="border-2 border-dashed border-outline-variant rounded-xl p-8 flex flex-col items-center justify-center bg-surface-container-low hover:border-primary transition-colors cursor-pointer group">
+<div class="w-16 h-16 bg-surface-container-highest rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<i class="text-on-surface-variant w-8 h-8" data-lucide="image-plus"></i>
+</div>
+<p class="text-body-md font-medium text-center mb-1">ลากไฟล์มาใส่ที่นี่ หรือ กดปุ่มอัพโหลดรูป</p>
+<p class="text-label-sm text-on-surface-variant mb-6 text-center">(แนะนำหน้าตรง, วิวหน้าต่าง, ห้องนอน, ห้องน้ำ)</p>
+<button class="bg-white border border-outline-variant px-8 py-2.5 rounded-lg font-bold text-body-md shadow-sm active:scale-95 transition-all" type="button">
+                        [ อัปโหลดรูป ]
+                    </button>
+</div>
+</section>
+<!-- 2. Product Title (ชื่อสินค้า) -->
+<section class="form-section-card p-margin-mobile rounded-xl">
+<div class="flex justify-between items-start mb-1">
+<label class="font-label-md text-label-md text-on-surface">ชื่อสินค้า</label>
+<span class="text-label-sm text-on-surface-variant">36/150</span>
+</div>
+<p class="text-label-sm text-on-surface-variant mb-3">ใช้คำที่ลูกค้าน่าจะค้นหามากที่สุดเวลาค้นหาสินค้าของคุณ</p>
+<input class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest text-body-md" placeholder="คอนโด ไฮด์ เฮอริเทจ ทองหล่อ 2 นอน 2 น้ำ ตกแต่งครบพร้อมอยู่" type="text" value="คอนโด ไฮด์ เฮอริเทจ ทองหล่อ 2 นอน 2 น้ำ"/>
+</section>
+<!-- 3. Category & Core Details -->
+<section class="form-section-card p-margin-mobile rounded-xl space-y-stack-sm">
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2">หมวดหมู่</label>
+<select class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest text-body-md">
+<option selected="">คอนโด</option>
+<option>บ้านเดี่ยว</option>
+<option>ทาวน์เฮ้าส์</option>
+<option>ที่ดิน</option>
+</select>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-3">ประเภทการถือครอง (Tenure Type)</label>
+<div class="grid grid-cols-2 gap-4">
+<label class="flex items-center justify-center p-3 border border-outline-variant rounded-lg cursor-pointer hover:border-primary has-[:checked]:border-primary has-[:checked]:bg-primary-fixed transition-all">
+<input checked="" class="hidden" name="tenure" type="radio" value="freehold"/>
+<span class="font-label-md">Freehold</span>
+</label>
+<label class="flex items-center justify-center p-3 border border-outline-variant rounded-lg cursor-pointer hover:border-primary has-[:checked]:border-primary has-[:checked]:bg-primary-fixed transition-all">
+<input class="hidden" name="tenure" type="radio" value="leasehold"/>
+<span class="font-label-md">Leasehold</span>
+</label>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2">ผู้พัฒนาโครงการ</label>
+<input class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest" placeholder="Developer name" type="text" value="Grand Star"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2">ปีที่สร้างเสร็จ</label>
+<input class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest" placeholder="2024" type="number" value="2022"/>
+</div>
+</div>
+</section>
+<!-- 4. Property Specifications with Quick Suggestions -->
+<section class="form-section-card p-margin-mobile rounded-xl space-y-stack-sm">
+<h3 class="font-label-md text-label-md text-on-surface mb-2">ข้อมูลจำเพาะ (Property Specifications)</h3>
+<div class="space-y-3">
+<label class="block font-label-sm text-on-surface-variant">พื้นที่ใช้สอย (ตร.ม.)</label>
+<div class="flex flex-wrap gap-2 mb-2">
+<span class="suggestion-chip">240</span>
+<span class="suggestion-chip">280</span>
+<span class="suggestion-chip">315</span>
+</div>
+<input class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest" placeholder="ใส่ตัวเลข" type="number"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-3">
+<label class="block font-label-sm text-on-surface-variant">จำนวนชั้นทั้งหมด</label>
+<div class="flex gap-2">
+<span class="suggestion-chip">1</span>
+<span class="suggestion-chip">3</span>
+<span class="suggestion-chip">4</span>
+</div>
+<input class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest" placeholder="0" type="number"/>
+</div>
+<div class="space-y-3">
+<label class="block font-label-sm text-on-surface-variant">ห้องนอน</label>
+<div class="flex gap-2">
+<span class="suggestion-chip">Studio</span>
+<span class="suggestion-chip">1</span>
+<span class="suggestion-chip">2</span>
+</div>
+<input class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest" placeholder="0" type="number"/>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-3">
+<label class="block font-label-sm text-on-surface-variant">ห้องน้ำ</label>
+<div class="flex gap-2">
+<span class="suggestion-chip">1</span>
+<span class="suggestion-chip">2</span>
+<span class="suggestion-chip">3</span>
+</div>
+<input class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest" placeholder="0" type="number"/>
+</div>
+<div class="space-y-3">
+<label class="block font-label-sm text-on-surface-variant">ที่จอดรถ</label>
+<div class="flex gap-2">
+<span class="suggestion-chip">1</span>
+<span class="suggestion-chip">2</span>
+<span class="suggestion-chip">ไม่มี</span>
+</div>
+<input class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest" placeholder="0" type="number"/>
+</div>
+</div>
+</section>
+<!-- 5. Listing Description -->
+<section class="form-section-card p-margin-mobile rounded-xl">
+<div class="flex justify-between items-start mb-2">
+<label class="font-label-md text-label-md text-on-surface">รายละเอียดสินค้า</label>
+<span class="text-label-sm text-on-surface-variant">0/1,500</span>
+</div>
+<textarea class="w-full p-4 border border-outline-variant rounded-lg bg-surface-lowest h-40 text-body-md" placeholder="ระบุรายละเอียดเพิ่มเติม เช่น ตำหนิสินค้า, เงื่อนไขการชำระเงิน, ช่องทางการส่งสินค้า..."></textarea>
+</section>
+<!-- 6. Transaction & Contact -->
+<section class="form-section-card p-margin-mobile rounded-xl space-y-stack-sm">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2">ราคาขาย (บาท)</label>
+<input class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest font-bold" placeholder="5,000,000" type="number"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2">ค่าส่วนกลาง/เดือน</label>
+<input class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest" placeholder="0" type="number"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2">เงินดาวน์ (%)</label>
+<input class="w-full h-12 px-4 border border-outline-variant rounded-lg bg-surface-lowest" placeholder="10" type="number"/>
+</div>
+</div>
+<div class="pt-2">
+<label class="block font-label-md text-label-md text-on-surface mb-3">สถานะผู้ขาย</label>
+<div class="flex gap-3">
+<button class="flex-1 py-3 border border-primary bg-primary-fixed text-primary font-bold rounded-lg" type="button">[ เจ้าของ ]</button>
+<button class="flex-1 py-3 border border-outline-variant rounded-lg text-on-surface-variant" type="button">[ เอเจ้นท์ ]</button>
+</div>
+</div>
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-lg mt-4">
+<div>
+<p class="font-bold text-body-md">แสดงเบอร์โทรศัพท์</p>
+<p class="text-label-sm text-on-surface-variant">อนุญาตให้ผู้ซื้อโทรหาคุณโดยตรง</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+<span class="ml-3 text-label-md font-medium text-on-surface">ใช่</span>
+</label>
+</div>
+</section>
+<!-- 7. Listing Packages -->
+<section class="form-section-card p-margin-mobile rounded-xl">
+<h3 class="font-title-md text-title-md font-bold mb-4">เลือกแพ็กเกจการลงขาย</h3>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<!-- Premium Package -->
+<div class="relative p-6 border-2 border-primary rounded-xl bg-primary-container text-white overflow-hidden">
+<div class="absolute top-0 right-0 bg-primary px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-bl-lg">Recommended</div>
+<h4 class="text-xl font-bold mb-2">พิเศษ (Premium)</h4>
+<p class="text-sm opacity-90 mb-4">เพิ่มโอกาสในการขายได้เร็วขึ้นถึง 300% ประกาศของคุณจะอยู่ตำแหน่งแรกๆ เสมอ</p>
+<div class="flex items-baseline gap-1 mb-4">
+<span class="text-2xl font-bold">฿299</span>
+<span class="text-xs opacity-70">/30 วัน</span>
+</div>
+<ul class="space-y-2 text-xs opacity-90">
+<li class="flex items-center gap-2"><i class="w-4 h-4 text-white" data-lucide="check-circle"></i> ดันประกาศอัตโนมัติ</li>
+<li class="flex items-center gap-2"><i class="w-4 h-4 text-white" data-lucide="check-circle"></i> แสดงในหน้าแรก</li>
+</ul>
+</div>
+<!-- Normal Package -->
+<div class="p-6 border border-outline-variant rounded-xl bg-surface-lowest">
+<h4 class="text-xl font-bold mb-2">ปกติ (Normal)</h4>
+<p class="text-sm text-on-surface-variant mb-4">ลงขายฟรีตามขีดจำกัดหมวดหมู่ ประกาศมีอายุ 90 วันก่อนต้องต่ออายุใหม่</p>
+<div class="flex items-baseline gap-1 mb-4 text-primary">
+<span class="text-2xl font-bold">ฟรี</span>
+</div>
+<ul class="space-y-2 text-xs text-on-surface-variant">
+<li class="flex items-center gap-2"><i class="w-4 h-4 text-primary" data-lucide="check-circle"></i> ลงขายได้ทันที</li>
+<li class="flex items-center gap-2"><i class="w-4 h-4 text-primary" data-lucide="check-circle"></i> จัดการผ่านแดชบอร์ด</li>
+</ul>
+</div>
+</div>
+</section>
+</form>
+</main>
+<!-- Bottom Action Bar -->
+<div class="fixed bottom-0 left-0 w-full bg-white border-t border-outline-variant p-4 md:px-margin-desktop z-50">
+<div class="max-w-container-max mx-auto flex gap-4">
+<button class="flex-1 h-14 bg-surface-container-high text-on-surface font-bold rounded-lg border border-outline-variant active:scale-95 transition-transform">
+                ดูตัวอย่าง
+            </button>
+<button class="flex-[2] h-14 bg-primary text-on-primary font-bold rounded-lg shadow-lg active:scale-95 transition-transform text-lg" id="submit-listing">
+                [ ลงขาย ]
+            </button>
+</div>
+</div>
+<!-- Navigation (Mobile Hidden for Form Flow) -->
+<nav class="hidden fixed bottom-0 w-full flex justify-around items-center py-2 px-margin-mobile bg-surface-lowest border-t border-outline-variant z-50">
+<!-- Kept for structure but hidden to prioritize the submission bar -->
+</nav>
+<script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Basic interaction logic
+        document.getElementById('submit-listing').addEventListener('click', () => {
+            alert("ขอบคุณ! ประกาศของคุณกำลังถูกดำเนินการตรวจสอบและจะออนไลน์ในไม่ช้า");
+        });
+
+        // Toggle Switch Display logic
+        const toggleCheck = document.querySelector('input[type="checkbox"]');
+        const toggleSpan = toggleCheck.parentElement.nextElementSibling;
+        toggleCheck.addEventListener('change', (e) => {
+            const spanText = e.target.parentElement.nextElementSibling;
+            if (spanText) spanText.textContent = e.target.checked ? "ใช่" : "ไม่ใช่";
+        });
+
+        // Simple suggestion chip interaction
+        document.querySelectorAll('.suggestion-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                const parent = chip.parentElement.parentElement;
+                const input = parent.querySelector('input');
+                if (input) {
+                    input.value = chip.textContent === 'Studio' || chip.textContent === 'ไม่มี' ? 0 : chip.textContent;
+                    // Visual feedback
+                    chip.classList.add('bg-primary', 'text-white', 'border-primary');
+                    setTimeout(() => chip.classList.remove('bg-primary', 'text-white', 'border-primary'), 200);
+                }
+            });
+        });
+    </script>
+</body></html>

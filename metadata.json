@@ -1,0 +1,6 @@
+{
+  "name": "PropPilot AI",
+  "description": "Premium AI Real Estate Marketing Platform Hero Section",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

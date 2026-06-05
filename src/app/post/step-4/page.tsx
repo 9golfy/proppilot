@@ -88,7 +88,6 @@ const postCopy = 'บ้านเดี่ยวสไตล์ใหม่ พ�
 
 const initialPostCopies = Object.fromEntries(platforms.map((platform) => [platform.name, postCopy])) as Record<PlatformName, string>;
 const initialActivePlatforms = Object.fromEntries(platforms.map((platform) => [platform.name, false])) as Record<PlatformName, boolean>;
-const initialSelectedPlatforms = Object.fromEntries(platforms.map((platform) => [platform.name, true])) as Record<PlatformName, boolean>;
 
 const postTags = ['#บ้านเดี่ยว', '#รามอินทรา', '#ใกล้MRT', '#พร้อมอยู่', '#บ้านสวย'];
 
@@ -116,6 +115,9 @@ const socialMediaPostSpecs: Record<PlatformName, { size: string; aspectRatio: st
   YouTube: { size: '1920 x 1080 px', aspectRatio: '1920 / 1080', image: 'cover' },
 };
 
+const ACTIVE_PLATFORMS_STORAGE_KEY = 'proppilot.step4.activePlatforms';
+const FACEBOOK_CONNECTION_STORAGE_KEY = 'proppilot.step4.facebookConnection';
+
 function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ');
 }
@@ -129,7 +131,7 @@ export default function PostStep4Page() {
   const [expandedPlatformName, setExpandedPlatformName] = useState<PlatformName>('Facebook');
   const [postCopies, setPostCopies] = useState<Record<PlatformName, string>>(initialPostCopies);
   const [activePlatforms, setActivePlatforms] = useState<Record<PlatformName, boolean>>(initialActivePlatforms);
-  const [selectedPlatforms, setSelectedPlatforms] = useState<Record<PlatformName, boolean>>(initialSelectedPlatforms);
+  const [storageLoaded, setStorageLoaded] = useState(false);
   const [facebookConnectOpen, setFacebookConnectOpen] = useState(false);
   const [facebookDestination, setFacebookDestination] = useState<FacebookDestination | null>(null);
   const [selectedFacebookPage, setSelectedFacebookPage] = useState<FacebookPageTarget | null>(null);
@@ -148,6 +150,50 @@ export default function PostStep4Page() {
     setExpandedPlatformName(platformName);
   };
 
+  useEffect(() => {
+    try {
+      const storedActivePlatforms = localStorage.getItem(ACTIVE_PLATFORMS_STORAGE_KEY);
+      if (storedActivePlatforms) {
+        const parsed = JSON.parse(storedActivePlatforms) as Partial<Record<PlatformName, boolean>>;
+        setActivePlatforms({
+          ...initialActivePlatforms,
+          ...Object.fromEntries(platforms.map((platform) => [platform.name, Boolean(parsed[platform.name])])),
+        } as Record<PlatformName, boolean>);
+      }
+
+      const storedFacebookConnection = localStorage.getItem(FACEBOOK_CONNECTION_STORAGE_KEY);
+      if (storedFacebookConnection) {
+        const parsed = JSON.parse(storedFacebookConnection) as {
+          destination?: FacebookDestination | null;
+          page?: FacebookPageTarget | null;
+        };
+        setFacebookDestination(parsed.destination ?? null);
+        setSelectedFacebookPage(parsed.page ?? null);
+      }
+    } catch {
+      localStorage.removeItem(ACTIVE_PLATFORMS_STORAGE_KEY);
+      localStorage.removeItem(FACEBOOK_CONNECTION_STORAGE_KEY);
+    } finally {
+      setStorageLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!storageLoaded) return;
+    localStorage.setItem(ACTIVE_PLATFORMS_STORAGE_KEY, JSON.stringify(activePlatforms));
+  }, [activePlatforms, storageLoaded]);
+
+  useEffect(() => {
+    if (!storageLoaded) return;
+    localStorage.setItem(
+      FACEBOOK_CONNECTION_STORAGE_KEY,
+      JSON.stringify({
+        destination: facebookDestination,
+        page: selectedFacebookPage,
+      }),
+    );
+  }, [facebookDestination, selectedFacebookPage, storageLoaded]);
+
   const togglePlatform = (platformName: PlatformName) => {
     if (activePlatforms[platformName]) {
       setActivePlatforms((current) => ({ ...current, [platformName]: false }));
@@ -160,27 +206,6 @@ export default function PostStep4Page() {
     }
 
     setActivePlatforms((current) => ({ ...current, [platformName]: true }));
-  };
-
-  const toggleSelectedPlatform = (platformName: PlatformName) => {
-    const next = { ...selectedPlatforms, [platformName]: !selectedPlatforms[platformName] };
-    setSelectedPlatforms(next);
-
-    if (!next[platformName] && selectedPlatformName === platformName) {
-      const fallback = platforms.find((platform) => next[platform.name]);
-      if (fallback) {
-        setSelectedPlatformName(fallback.name);
-        setExpandedPlatformName(fallback.name);
-      }
-    }
-  };
-
-  const setAllPlatformsSelected = (selected: boolean) => {
-    setSelectedPlatforms(Object.fromEntries(platforms.map((platform) => [platform.name, selected])) as Record<PlatformName, boolean>);
-    if (selected) {
-      setSelectedPlatformName('Facebook');
-      setExpandedPlatformName('Facebook');
-    }
   };
 
   const handleFacebookConnect = (destination: FacebookDestination, page?: FacebookPageTarget) => {
@@ -288,7 +313,6 @@ export default function PostStep4Page() {
                 expandedPlatformName={expandedPlatformName}
                 postCopies={postCopies}
                 activePlatforms={activePlatforms}
-                selectedPlatforms={selectedPlatforms}
                 postTagsByPlatform={postTagsByPlatform}
                 postMediaByPlatform={postMediaByPlatform}
                 postSchedulesByPlatform={postSchedulesByPlatform}
@@ -298,8 +322,6 @@ export default function PostStep4Page() {
                 onSelectPlatform={handleSelectPlatform}
                 onExpandPlatform={setExpandedPlatformName}
                 onTogglePlatform={togglePlatform}
-                onToggleSelectedPlatform={toggleSelectedPlatform}
-                onSetAllPlatformsSelected={setAllPlatformsSelected}
                 onAddTag={addTag}
                 onRemoveTag={removeTag}
                 onAddMedia={addMedia}
@@ -322,7 +344,6 @@ function ComposePanel({
   expandedPlatformName,
   postCopies,
   activePlatforms,
-  selectedPlatforms,
   postTagsByPlatform,
   postMediaByPlatform,
   postSchedulesByPlatform,
@@ -332,8 +353,6 @@ function ComposePanel({
   onSelectPlatform,
   onExpandPlatform,
   onTogglePlatform,
-  onToggleSelectedPlatform,
-  onSetAllPlatformsSelected,
   onAddTag,
   onRemoveTag,
   onAddMedia,
@@ -345,7 +364,6 @@ function ComposePanel({
   expandedPlatformName: PlatformName;
   postCopies: Record<PlatformName, string>;
   activePlatforms: Record<PlatformName, boolean>;
-  selectedPlatforms: Record<PlatformName, boolean>;
   postTagsByPlatform: Record<PlatformName, string[]>;
   postMediaByPlatform: Record<PlatformName, string[]>;
   postSchedulesByPlatform: Record<PlatformName, PlatformSchedule>;
@@ -355,8 +373,6 @@ function ComposePanel({
   onSelectPlatform: (platformName: PlatformName) => void;
   onExpandPlatform: (platformName: PlatformName) => void;
   onTogglePlatform: (platformName: PlatformName) => void;
-  onToggleSelectedPlatform: (platformName: PlatformName) => void;
-  onSetAllPlatformsSelected: (selected: boolean) => void;
   onAddTag: (platformName: PlatformName, tag: string) => void;
   onRemoveTag: (platformName: PlatformName, tag: string) => void;
   onAddMedia: (platformName: PlatformName, files: FileList | null) => void;
@@ -364,71 +380,17 @@ function ComposePanel({
   onUpdateSchedule: (platformName: PlatformName, schedule: Partial<PlatformSchedule>) => void;
   onPublishNow: (platformName: PlatformName) => void;
 }) {
-  const [platformMenuOpen, setPlatformMenuOpen] = useState(false);
-  const platformMenuRef = useRef<HTMLDivElement | null>(null);
-  const selectedCount = platforms.filter((platform) => selectedPlatforms[platform.name]).length;
-  const allPlatformsSelected = selectedCount === platforms.length;
-  const visiblePlatforms = platforms.filter((platform) => selectedPlatforms[platform.name]);
-
-  useEffect(() => {
-    if (!platformMenuOpen) return;
-
-    const handlePointerDown = (event: MouseEvent) => {
-      if (!platformMenuRef.current?.contains(event.target as Node)) {
-        setPlatformMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handlePointerDown);
-    return () => document.removeEventListener('mousedown', handlePointerDown);
-  }, [platformMenuOpen]);
-
   return (
     <section className="overflow-hidden rounded-[12px] border border-[#E2E8F0] bg-white shadow-[0_8px_26px_rgba(15,23,42,0.04)]">
       <div className="border-b border-[#E2E8F0] p-5">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-[16px] font-bold text-[#0F172A]">เลือกแพลตฟอร์ม</h2>
-          <div ref={platformMenuRef} className="relative">
-            <button
-              type="button"
-              onClick={() => setPlatformMenuOpen((open) => !open)}
-              aria-expanded={platformMenuOpen}
-              className="inline-flex h-9 items-center gap-2 rounded-[8px] border border-[#D8DEE9] bg-white px-3 text-[12px] font-semibold text-[#64748B] transition hover:border-[#B9C5FF]"
-            >
-              เลือกแพลตฟอร์มทั้งหมด
-              <ChevronDown className={cx('size-4 transition', platformMenuOpen && 'rotate-180')} />
-            </button>
-            {platformMenuOpen ? (
-              <div className="absolute right-0 top-11 z-30 w-[240px] overflow-hidden rounded-[12px] border border-[#E2E8F0] bg-white shadow-[0_18px_48px_rgba(15,23,42,0.14)]">
-                <div className="border-b border-[#EEF2F7] px-3 py-2 text-[12px] font-semibold text-[#64748B]">{selectedCount} / {platforms.length} active</div>
-                <button type="button" onClick={() => onSetAllPlatformsSelected(!allPlatformsSelected)} className="flex h-11 w-full items-center gap-2 px-3 text-left text-[13px] font-semibold text-[#0F172A] hover:bg-[#F8FAFC]">
-                  <span className={cx('grid size-5 place-items-center rounded-[5px] border', allPlatformsSelected ? 'border-[#6C63FF] bg-[#6C63FF] text-white' : 'border-[#CBD5E1] text-transparent')}>
-                    <Check className="size-3.5" />
-                  </span>
-                  เลือกทั้งหมด
-                </button>
-                <div className="border-t border-[#EEF2F7] py-1">
-                  {platforms.map((platform) => {
-                    const selected = selectedPlatforms[platform.name];
-                    return (
-                      <button key={`menu-${platform.name}`} type="button" onClick={() => onToggleSelectedPlatform(platform.name)} className="flex h-10 w-full items-center gap-2 px-3 text-left text-[13px] font-semibold text-[#334155] hover:bg-[#F8FAFC]">
-                        <span className={cx('grid size-5 place-items-center rounded-[5px] border', selected ? 'border-[#6C63FF] bg-[#6C63FF] text-white' : 'border-[#CBD5E1] text-transparent')}>
-                          <Check className="size-3.5" />
-                        </span>
-                        <img src={platform.logo.src} alt="" aria-hidden="true" className="size-4 shrink-0" />
-                        {platform.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-          </div>
+          <span className="text-[12px] font-semibold text-[#64748B]">แสดง {platforms.length} แพลตฟอร์ม</span>
         </div>
       </div>
 
       <div className="divide-y divide-[#E2E8F0]">
-        {visiblePlatforms.map((platform) => (
+        {platforms.map((platform) => (
           <PlatformComposer
             key={platform.name}
             platform={platform}

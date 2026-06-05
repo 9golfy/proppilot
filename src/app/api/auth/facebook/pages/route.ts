@@ -1,6 +1,7 @@
 import { errorResponse, jsonResponse } from '@/lib/api/response';
+import { env } from '@/config/env';
 
-const FACEBOOK_PAGES_URL = 'https://graph.facebook.com/v23.0/me/accounts';
+const FACEBOOK_PAGES_URL = 'https://graph.facebook.com/v25.0/me/accounts';
 
 type FacebookGraphError = {
   message?: string;
@@ -11,7 +12,13 @@ type FacebookGraphError = {
 };
 
 type FacebookPagesResponse = {
-  data?: unknown[];
+  data?: Array<{
+    id: string;
+    name: string;
+    category?: string;
+    tasks?: string[];
+    access_token?: string;
+  }>;
   paging?: unknown;
   error?: FacebookGraphError;
 };
@@ -29,7 +36,7 @@ function getAccessToken(request: Request) {
   }
 
   const url = new URL(request.url);
-  return url.searchParams.get('accessToken')?.trim() || null;
+  return url.searchParams.get('accessToken')?.trim() || env.facebookAccessToken || null;
 }
 
 export async function GET(request: Request): Promise<Response> {
@@ -41,6 +48,7 @@ export async function GET(request: Request): Promise<Response> {
 
   try {
     const pagesUrl = new URL(FACEBOOK_PAGES_URL);
+    pagesUrl.searchParams.set('fields', 'id,name,category,tasks');
     pagesUrl.searchParams.set('access_token', accessToken);
 
     const response = await fetch(pagesUrl, { cache: 'no-store' });

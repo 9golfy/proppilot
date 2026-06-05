@@ -3,6 +3,7 @@ import { errorResponse, jsonResponse } from '@/lib/api/response';
 
 const FACEBOOK_GRAPH_URL = 'https://graph.facebook.com/v25.0';
 const DEFAULT_FACEBOOK_PAGE_ID = '100091331610374';
+const DEFAULT_PUBLIC_APP_URL = 'https://proppilot-jet.vercel.app';
 
 type FacebookGraphError = {
   message?: string;
@@ -25,12 +26,14 @@ type FacebookAccountsResponse = {
 
 type FacebookPostResponse = {
   id?: string;
+  post_id?: string;
   error?: FacebookGraphError;
 };
 
 type PublishFacebookPostRequest = {
   message?: string;
   pageId?: string;
+  imageUrl?: string;
 };
 
 function getFacebookErrorMessage(error?: FacebookGraphError) {
@@ -65,6 +68,40 @@ async function getPageAccessToken(pageId: string) {
   return page.access_token;
 }
 
+function getAbsoluteImageUrl(imageUrl: string | undefined, request: Request) {
+  if (!imageUrl) return null;
+
+  if (imageUrl.startsWith('blob:') || imageUrl.startsWith('data:')) {
+    throw new Error('Facebook cannot publish local browser images. Please use a public image URL or upload the image to storage first.');
+  }
+
+  const requestOrigin = new URL(request.url).origin;
+  const configuredOrigin = env.appUrl || requestOrigin;
+  const publicOrigin = configuredOrigin.includes('localhost') || configuredOrigin.includes('127.0.0.1') ? DEFAULT_PUBLIC_APP_URL : configuredOrigin;
+
+  let absoluteUrl: URL;
+
+  try {
+    absoluteUrl = new URL(imageUrl);
+  } catch {
+    absoluteUrl = new URL(imageUrl, publicOrigin);
+  }
+
+  if (!['http:', 'https:'].includes(absoluteUrl.protocol)) {
+    throw new Error('Facebook image URL must use http or https.');
+  }
+
+  if (absoluteUrl.hostname === 'localhost' || absoluteUrl.hostname === '127.0.0.1') {
+    if (imageUrl.startsWith('/')) {
+      return new URL(imageUrl, DEFAULT_PUBLIC_APP_URL).toString();
+    }
+
+    throw new Error('Facebook image URL must be publicly accessible, not localhost.');
+  }
+
+  return absoluteUrl.toString();
+}
+
 export async function POST(request: Request): Promise<Response> {
   let body: PublishFacebookPostRequest;
 
@@ -76,6 +113,7 @@ export async function POST(request: Request): Promise<Response> {
 
   const message = body.message?.trim();
   const pageId = body.pageId?.trim() || env.facebookPageId || DEFAULT_FACEBOOK_PAGE_ID;
+  const imageUrl = getAbsoluteImageUrl(body.imageUrl?.trim(), request);
 
   if (!message) {
     return errorResponse('Missing post message.', 400);
@@ -83,9 +121,12 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     const pageAccessToken = await getPageAccessToken(pageId);
-    const postUrl = new URL(`${FACEBOOK_GRAPH_URL}/${pageId}/feed`);
+    const postUrl = new URL(`${FACEBOOK_GRAPH_URL}/${pageId}/${imageUrl ? 'photos' : 'feed'}`);
     const formData = new URLSearchParams();
-    formData.set('message', message);
+    formData.set(imageUrl ? 'caption' : 'message', message);
+    if (imageUrl) {
+      formData.set('url', imageUrl);
+    }
     formData.set('access_token', pageAccessToken);
 
     const response = await fetch(postUrl, {
@@ -95,7 +136,9 @@ export async function POST(request: Request): Promise<Response> {
     });
     const payload = (await response.json()) as FacebookPostResponse;
 
-    if (!response.ok || payload.error || !payload.id) {
+    const postId = payload.post_id || payload.id;
+
+    if (!response.ok || payload.error || !postId) {
       return errorResponse(getFacebookErrorMessage(payload.error), response.status || 500);
     }
 
@@ -103,7 +146,8 @@ export async function POST(request: Request): Promise<Response> {
       success: true,
       pageId,
       post: {
-        id: payload.id,
+        id: postId,
+        imageUrl,
       },
     });
   } catch (error) {

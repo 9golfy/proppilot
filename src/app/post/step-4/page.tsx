@@ -46,6 +46,13 @@ type PlatformName = 'Facebook' | 'Instagram' | 'X (Twitter)' | 'TikTok' | 'YouTu
 type FacebookDestination = 'Profile' | 'Page' | 'Location' | 'Group';
 type ScheduleMode = 'now' | 'scheduled';
 
+type FacebookPageTarget = {
+  id: string;
+  name: string;
+  category?: string;
+  tasks?: string[];
+};
+
 type PlatformSchedule = {
   mode: ScheduleMode;
   timezone: string;
@@ -125,6 +132,7 @@ export default function PostStep4Page() {
   const [selectedPlatforms, setSelectedPlatforms] = useState<Record<PlatformName, boolean>>(initialSelectedPlatforms);
   const [facebookConnectOpen, setFacebookConnectOpen] = useState(false);
   const [facebookDestination, setFacebookDestination] = useState<FacebookDestination | null>(null);
+  const [selectedFacebookPage, setSelectedFacebookPage] = useState<FacebookPageTarget | null>(null);
   const [postTagsByPlatform, setPostTagsByPlatform] = useState<Record<PlatformName, string[]>>(initialPostTags);
   const [postMediaByPlatform, setPostMediaByPlatform] = useState<Record<PlatformName, string[]>>(initialPostMedia);
   const [postSchedulesByPlatform, setPostSchedulesByPlatform] = useState<Record<PlatformName, PlatformSchedule>>(initialPostSchedules);
@@ -175,8 +183,9 @@ export default function PostStep4Page() {
     }
   };
 
-  const handleFacebookConnect = (destination: FacebookDestination) => {
+  const handleFacebookConnect = (destination: FacebookDestination, page?: FacebookPageTarget) => {
     setFacebookDestination(destination);
+    setSelectedFacebookPage(page ?? null);
     setActivePlatforms((current) => ({ ...current, Facebook: true }));
     setSelectedPlatformName('Facebook');
     setExpandedPlatformName('Facebook');
@@ -226,10 +235,10 @@ export default function PostStep4Page() {
       return;
     }
 
-    if (!activePlatforms.Facebook) {
+    if (!activePlatforms.Facebook || !selectedFacebookPage) {
       setPublishStatusesByPlatform((current) => ({
         ...current,
-        Facebook: { state: 'error', message: 'Please connect Facebook before publishing.' },
+        Facebook: { state: 'error', message: 'Please connect and select a Facebook Page before publishing.' },
       }));
       return;
     }
@@ -243,7 +252,8 @@ export default function PostStep4Page() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message,
-          pageId: '100091331610374',
+          pageId: selectedFacebookPage.id,
+          imageUrl: postMediaByPlatform.Facebook[0],
         }),
       });
       const payload = (await response.json()) as { success?: boolean; post?: { id?: string }; error?: string };
@@ -283,6 +293,7 @@ export default function PostStep4Page() {
                 postMediaByPlatform={postMediaByPlatform}
                 postSchedulesByPlatform={postSchedulesByPlatform}
                 publishStatusesByPlatform={publishStatusesByPlatform}
+                selectedFacebookPage={selectedFacebookPage}
                 onCopyChange={handlePostCopyChange}
                 onSelectPlatform={handleSelectPlatform}
                 onExpandPlatform={setExpandedPlatformName}
@@ -296,7 +307,7 @@ export default function PostStep4Page() {
                 onUpdateSchedule={updateSchedule}
                 onPublishNow={publishPostNow}
               />
-              <PreviewPanel selectedPlatformName={selectedPlatformName} postCopy={postCopies[selectedPlatformName]} media={postMediaByPlatform[selectedPlatformName]} onSelectPlatform={handleSelectPlatform} />
+              <PreviewPanel selectedPlatformName={selectedPlatformName} postCopy={postCopies[selectedPlatformName]} media={postMediaByPlatform[selectedPlatformName]} selectedFacebookPage={selectedFacebookPage} onSelectPlatform={handleSelectPlatform} />
             </div>
           </div>
         </div>
@@ -316,6 +327,7 @@ function ComposePanel({
   postMediaByPlatform,
   postSchedulesByPlatform,
   publishStatusesByPlatform,
+  selectedFacebookPage,
   onCopyChange,
   onSelectPlatform,
   onExpandPlatform,
@@ -338,6 +350,7 @@ function ComposePanel({
   postMediaByPlatform: Record<PlatformName, string[]>;
   postSchedulesByPlatform: Record<PlatformName, PlatformSchedule>;
   publishStatusesByPlatform: Record<PlatformName, PlatformPublishStatus>;
+  selectedFacebookPage: FacebookPageTarget | null;
   onCopyChange: (platformName: PlatformName, copy: string) => void;
   onSelectPlatform: (platformName: PlatformName) => void;
   onExpandPlatform: (platformName: PlatformName) => void;
@@ -425,6 +438,7 @@ function ComposePanel({
             media={postMediaByPlatform[platform.name]}
             schedule={postSchedulesByPlatform[platform.name]}
             publishStatus={publishStatusesByPlatform[platform.name]}
+            selectedFacebookPage={platform.name === 'Facebook' ? selectedFacebookPage : null}
             expanded={expandedPlatformName === platform.name}
             selected={selectedPlatformName === platform.name}
             onCopyChange={(copy) => onCopyChange(platform.name, copy)}
@@ -452,6 +466,7 @@ function PlatformComposer({
   media,
   schedule,
   publishStatus,
+  selectedFacebookPage,
   expanded,
   selected,
   onCopyChange,
@@ -472,6 +487,7 @@ function PlatformComposer({
   media: string[];
   schedule: PlatformSchedule;
   publishStatus: PlatformPublishStatus;
+  selectedFacebookPage: FacebookPageTarget | null;
   expanded: boolean;
   selected: boolean;
   onCopyChange: (copy: string) => void;
@@ -533,6 +549,12 @@ function PlatformComposer({
             </div>
           ) : (
             <>
+          {platform.name === 'Facebook' && selectedFacebookPage ? (
+            <div className="rounded-[10px] border border-[#D8DEE9] bg-white px-3 py-2 text-[12px] font-semibold text-[#334155]">
+              Page เป้าหมาย: <span className="font-bold text-[#4F46E5]">{selectedFacebookPage.name}</span>
+              <span className="ml-2 text-[#94A3B8]">ID: {selectedFacebookPage.id}</span>
+            </div>
+          ) : null}
           <label className="block">
             <span className="mb-2 block text-[12px] font-bold text-[#334155]">{platform.name === 'Facebook' ? 'ข้อความสำหรับโพสต์' : 'คำบรรยาย'}</span>
             <textarea
@@ -613,9 +635,12 @@ function FacebookConnectModal({
 }: {
   open: boolean;
   onClose: () => void;
-  onConnect: (destination: FacebookDestination) => void;
+  onConnect: (destination: FacebookDestination, page?: FacebookPageTarget) => void;
 }) {
-  if (!open) return null;
+  const [view, setView] = useState<'destinations' | 'pages'>('destinations');
+  const [pages, setPages] = useState<FacebookPageTarget[]>([]);
+  const [pagesLoading, setPagesLoading] = useState(false);
+  const [pagesError, setPagesError] = useState<string | null>(null);
 
   const options: Array<{
     name: FacebookDestination;
@@ -628,6 +653,45 @@ function FacebookConnectModal({
     { name: 'Location', icon: MapPin, className: 'bg-[#EF3D58]' },
     { name: 'Group', note: '(via reminders)', icon: Users, className: 'bg-[#2D8CFF]' },
   ];
+
+  useEffect(() => {
+    if (!open) return;
+    setView('destinations');
+    setPagesError(null);
+  }, [open]);
+
+  const loadFacebookPages = async () => {
+    setPagesLoading(true);
+    setPagesError(null);
+    setView('pages');
+
+    try {
+      const response = await fetch('/api/auth/facebook/pages', { cache: 'no-store' });
+      const payload = (await response.json()) as { data?: FacebookPageTarget[]; error?: string };
+
+      if (!response.ok) {
+        throw new Error(payload.error || 'Unable to load Facebook Pages.');
+      }
+
+      setPages(payload.data || []);
+    } catch (error) {
+      setPages([]);
+      setPagesError(error instanceof Error ? error.message : 'Unable to load Facebook Pages.');
+    } finally {
+      setPagesLoading(false);
+    }
+  };
+
+  const handleDestinationClick = (destination: FacebookDestination) => {
+    if (destination === 'Page') {
+      void loadFacebookPages();
+      return;
+    }
+
+    onConnect(destination);
+  };
+
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/35 px-4 py-6">
@@ -644,25 +708,77 @@ function FacebookConnectModal({
 
         <div className="my-7 h-px bg-[#E2E8F0]" />
 
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {options.map((option) => {
-            const OptionIcon = option.icon;
-            return (
-              <button
-                key={option.name}
-                type="button"
-                onClick={() => onConnect(option.name)}
-                className="flex min-h-[158px] flex-col items-center justify-center rounded-[8px] border border-[#D8DEE9] bg-white px-4 text-center transition hover:border-[#B9C5FF] hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]"
-              >
-                <span className={cx('grid size-10 place-items-center rounded-full text-white', option.className)}>
-                  <OptionIcon className="size-6" />
-                </span>
-                <span className="mt-4 text-[18px] font-bold text-[#575A7A]">{option.name}</span>
-                {option.note ? <span className="mt-0.5 text-[12px] font-bold text-[#575A7A]">{option.note}</span> : null}
+        {view === 'destinations' ? (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {options.map((option) => {
+              const OptionIcon = option.icon;
+              return (
+                <button
+                  key={option.name}
+                  type="button"
+                  onClick={() => handleDestinationClick(option.name)}
+                  className="flex min-h-[158px] flex-col items-center justify-center rounded-[8px] border border-[#D8DEE9] bg-white px-4 text-center transition hover:border-[#B9C5FF] hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]"
+                >
+                  <span className={cx('grid size-10 place-items-center rounded-full text-white', option.className)}>
+                    <OptionIcon className="size-6" />
+                  </span>
+                  <span className="mt-4 text-[18px] font-bold text-[#575A7A]">{option.name}</span>
+                  {option.note ? <span className="mt-0.5 text-[12px] font-bold text-[#575A7A]">{option.note}</span> : null}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div>
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <button type="button" onClick={() => setView('destinations')} className="text-[13px] font-bold text-[#5B5DF6]">
+                กลับไปเลือกประเภท
               </button>
-            );
-          })}
-        </div>
+              <p className="text-[13px] font-semibold text-[#64748B]">เลือก Facebook Page เป้าหมาย</p>
+            </div>
+
+            {pagesLoading ? (
+              <div className="rounded-[10px] border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-4 py-6 text-center text-[13px] font-semibold text-[#64748B]">
+                กำลังโหลด Facebook Pages...
+              </div>
+            ) : null}
+
+            {pagesError ? (
+              <div className="rounded-[10px] border border-[#FECACA] bg-[#FEF2F2] px-4 py-3 text-[13px] font-semibold text-[#B91C1C]">
+                {pagesError}
+              </div>
+            ) : null}
+
+            {!pagesLoading && !pagesError ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {pages.map((page) => (
+                  <button
+                    key={page.id}
+                    type="button"
+                    onClick={() => onConnect('Page', page)}
+                    className="rounded-[10px] border border-[#D8DEE9] bg-white p-4 text-left transition hover:border-[#B9C5FF] hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]"
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#1877F2] text-white">
+                        <Flag className="size-5" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-[15px] font-bold text-[#0F172A]">{page.name}</p>
+                        <p className="mt-1 text-[12px] font-semibold text-[#64748B]">{page.category || 'Facebook Page'}</p>
+                        <p className="mt-1 text-[11px] font-semibold text-[#94A3B8]">ID: {page.id}</p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+                {!pages.length ? (
+                  <div className="rounded-[10px] border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-4 py-6 text-center text-[13px] font-semibold text-[#64748B] sm:col-span-2">
+                    ไม่พบ Facebook Page ที่เชื่อมต่อได้
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        )}
       </section>
     </div>
   );
@@ -672,11 +788,13 @@ function PreviewPanel({
   selectedPlatformName,
   postCopy,
   media,
+  selectedFacebookPage,
   onSelectPlatform,
 }: {
   selectedPlatformName: PlatformName;
   postCopy: string;
   media: string[];
+  selectedFacebookPage: FacebookPageTarget | null;
   onSelectPlatform: (platformName: PlatformName) => void;
 }) {
   return (
@@ -712,7 +830,7 @@ function PreviewPanel({
 
       <div className="bg-[#FAFBFF] px-5 py-6">
         <div className="mx-auto max-w-[520px]">
-          <SocialPreview selectedPlatformName={selectedPlatformName} postCopy={postCopy} media={media} />
+          <SocialPreview selectedPlatformName={selectedPlatformName} postCopy={postCopy} media={media} selectedFacebookPage={selectedFacebookPage} />
         </div>
         <p className="mt-3 text-center text-[11px] font-medium text-[#94A3B8]">* ตัวอย่างอาจแตกต่างจากการแสดงผลจริงในแต่ละแพลตฟอร์ม</p>
       </div>
@@ -720,11 +838,22 @@ function PreviewPanel({
   );
 }
 
-function SocialPreview({ selectedPlatformName, postCopy, media }: { selectedPlatformName: PlatformName; postCopy: string; media: string[] }) {
+function SocialPreview({
+  selectedPlatformName,
+  postCopy,
+  media,
+  selectedFacebookPage,
+}: {
+  selectedPlatformName: PlatformName;
+  postCopy: string;
+  media: string[];
+  selectedFacebookPage: FacebookPageTarget | null;
+}) {
   const platform = getPlatform(selectedPlatformName);
   const mediaSpec = socialMediaPostSpecs[selectedPlatformName];
   const mediaSrc = media[0] ?? (mediaSpec.image === 'cover' ? vdoCover.src : previewGif.src);
   const isFacebook = selectedPlatformName === 'Facebook';
+  const profileName = isFacebook && selectedFacebookPage ? selectedFacebookPage.name : 'PropPilot Real Estate';
 
   return (
     <article className="overflow-hidden rounded-[12px] border border-[#D8DEE9] bg-white shadow-[0_12px_36px_rgba(15,23,42,0.07)]">
@@ -732,7 +861,7 @@ function SocialPreview({ selectedPlatformName, postCopy, media }: { selectedPlat
         <div className="flex min-w-0 items-center gap-3">
           <img src={platform.logo.src} alt="" aria-hidden="true" className="size-10 shrink-0" />
           <div className="min-w-0">
-            <p className="truncate text-[13px] font-bold text-[#0F172A]">PropPilot Real Estate</p>
+            <p className="truncate text-[13px] font-bold text-[#0F172A]">{profileName}</p>
             <p className="inline-flex items-center gap-1 truncate text-[11px] font-semibold text-[#64748B]">
               Just now
               <span className="text-[#CBD5E1]">•</span>

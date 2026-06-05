@@ -1,4 +1,5 @@
 export const env = {
+  appUrl: process.env.APP_URL,
   openaiApiKey: process.env.OPENAI_API_KEY,
   geminiApiKey: process.env.GEMINI_API_KEY,
   claudeApiKey: process.env.CLAUDE_API_KEY,

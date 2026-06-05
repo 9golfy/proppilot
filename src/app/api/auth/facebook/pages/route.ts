@@ -20,12 +20,23 @@ function getFacebookErrorMessage(error?: FacebookGraphError) {
   return error?.message || 'Facebook pages request failed.';
 }
 
-export async function GET(request: Request): Promise<Response> {
+function getAccessToken(request: Request) {
+  const authorization = request.headers.get('authorization');
+  const bearerPrefix = 'Bearer ';
+
+  if (authorization?.startsWith(bearerPrefix)) {
+    return authorization.slice(bearerPrefix.length).trim();
+  }
+
   const url = new URL(request.url);
-  const accessToken = url.searchParams.get('accessToken');
+  return url.searchParams.get('accessToken')?.trim() || null;
+}
+
+export async function GET(request: Request): Promise<Response> {
+  const accessToken = getAccessToken(request);
 
   if (!accessToken) {
-    return errorResponse('Missing accessToken query parameter.', 400);
+    return errorResponse('Missing Facebook access token. Provide Authorization: Bearer TOKEN or accessToken query parameter.', 400);
   }
 
   try {

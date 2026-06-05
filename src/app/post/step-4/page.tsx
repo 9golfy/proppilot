@@ -5,7 +5,6 @@ import type { ChangeEvent, KeyboardEvent } from 'react';
 import type { StaticImageData } from 'next/image';
 
 import {
-  ArrowLeft,
   Bookmark,
   Calendar,
   Check,
@@ -45,6 +44,22 @@ import youtubeLogo from '@/images/youtube-circle.svg';
 
 type PlatformName = 'Facebook' | 'Instagram' | 'X (Twitter)' | 'TikTok' | 'YouTube';
 type FacebookDestination = 'Profile' | 'Page' | 'Location' | 'Group';
+type ScheduleMode = 'now' | 'scheduled';
+
+type PlatformSchedule = {
+  mode: ScheduleMode;
+  timezone: string;
+  date: string;
+  time: string;
+  draftSaved: boolean;
+};
+
+type PublishState = 'idle' | 'posting' | 'success' | 'error';
+
+type PlatformPublishStatus = {
+  state: PublishState;
+  message?: string;
+};
 
 type PlatformConfig = {
   name: PlatformName;
@@ -72,6 +87,19 @@ const postTags = ['#บ้านเดี่ยว', '#รามอินทร�
 
 const initialPostMedia = Object.fromEntries(platforms.map((platform) => [platform.name, [vdoCover.src, previewGif.src, vdoCover.src]])) as Record<PlatformName, string[]>;
 const initialPostTags = Object.fromEntries(platforms.map((platform) => [platform.name, postTags.slice(0, platform.name === 'Instagram' ? 5 : 4)])) as Record<PlatformName, string[]>;
+const initialPostSchedules = Object.fromEntries(
+  platforms.map((platform) => [
+    platform.name,
+    {
+      mode: 'now',
+      timezone: '(GMT+7) Bangkok',
+      date: '2025-05-26',
+      time: '10:00',
+      draftSaved: false,
+    },
+  ]),
+) as Record<PlatformName, PlatformSchedule>;
+const initialPublishStatuses = Object.fromEntries(platforms.map((platform) => [platform.name, { state: 'idle' }])) as Record<PlatformName, PlatformPublishStatus>;
 
 const socialMediaPostSpecs: Record<PlatformName, { size: string; aspectRatio: string; image: 'preview' | 'cover' }> = {
   Facebook: { size: '1200 x 630 px', aspectRatio: '1200 / 630', image: 'preview' },
@@ -99,6 +127,8 @@ export default function PostStep4Page() {
   const [facebookDestination, setFacebookDestination] = useState<FacebookDestination | null>(null);
   const [postTagsByPlatform, setPostTagsByPlatform] = useState<Record<PlatformName, string[]>>(initialPostTags);
   const [postMediaByPlatform, setPostMediaByPlatform] = useState<Record<PlatformName, string[]>>(initialPostMedia);
+  const [postSchedulesByPlatform, setPostSchedulesByPlatform] = useState<Record<PlatformName, PlatformSchedule>>(initialPostSchedules);
+  const [publishStatusesByPlatform, setPublishStatusesByPlatform] = useState<Record<PlatformName, PlatformPublishStatus>>(initialPublishStatuses);
 
   const handlePostCopyChange = (platformName: PlatformName, copy: string) => {
     setPostCopies((current) => ({ ...current, [platformName]: copy }));
@@ -177,6 +207,63 @@ export default function PostStep4Page() {
     setPostMediaByPlatform((current) => ({ ...current, [platformName]: current[platformName].filter((_, mediaIndex) => mediaIndex !== index) }));
   };
 
+  const updateSchedule = (platformName: PlatformName, schedule: Partial<PlatformSchedule>) => {
+    setPostSchedulesByPlatform((current) => ({
+      ...current,
+      [platformName]: {
+        ...current[platformName],
+        ...schedule,
+      },
+    }));
+  };
+
+  const publishPostNow = async (platformName: PlatformName) => {
+    if (platformName !== 'Facebook') {
+      setPublishStatusesByPlatform((current) => ({
+        ...current,
+        [platformName]: { state: 'error', message: `${platformName} publishing is not connected yet.` },
+      }));
+      return;
+    }
+
+    if (!activePlatforms.Facebook) {
+      setPublishStatusesByPlatform((current) => ({
+        ...current,
+        Facebook: { state: 'error', message: 'Please connect Facebook before publishing.' },
+      }));
+      return;
+    }
+
+    const message = [postCopies.Facebook, postTagsByPlatform.Facebook.join(' ')].filter(Boolean).join('\n\n');
+    setPublishStatusesByPlatform((current) => ({ ...current, Facebook: { state: 'posting', message: 'Posting to Facebook Page...' } }));
+
+    try {
+      const response = await fetch('/api/auth/facebook/post', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message,
+          pageId: '100091331610374',
+        }),
+      });
+      const payload = (await response.json()) as { success?: boolean; post?: { id?: string }; error?: string };
+
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.error || 'Facebook publish failed.');
+      }
+
+      setPublishStatusesByPlatform((current) => ({
+        ...current,
+        Facebook: { state: 'success', message: `Posted to Facebook successfully${payload.post?.id ? `: ${payload.post.id}` : '.'}` },
+      }));
+    } catch (error) {
+      setPublishStatusesByPlatform((current) => ({
+        ...current,
+        Facebook: { state: 'error', message: error instanceof Error ? error.message : 'Facebook publish failed.' },
+      }));
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#F6F8FC] text-[#0F172A]">
       <div className="flex min-h-screen">
@@ -194,6 +281,8 @@ export default function PostStep4Page() {
                 selectedPlatforms={selectedPlatforms}
                 postTagsByPlatform={postTagsByPlatform}
                 postMediaByPlatform={postMediaByPlatform}
+                postSchedulesByPlatform={postSchedulesByPlatform}
+                publishStatusesByPlatform={publishStatusesByPlatform}
                 onCopyChange={handlePostCopyChange}
                 onSelectPlatform={handleSelectPlatform}
                 onExpandPlatform={setExpandedPlatformName}
@@ -204,6 +293,8 @@ export default function PostStep4Page() {
                 onRemoveTag={removeTag}
                 onAddMedia={addMedia}
                 onRemoveMedia={removeMedia}
+                onUpdateSchedule={updateSchedule}
+                onPublishNow={publishPostNow}
               />
               <PreviewPanel selectedPlatformName={selectedPlatformName} postCopy={postCopies[selectedPlatformName]} media={postMediaByPlatform[selectedPlatformName]} onSelectPlatform={handleSelectPlatform} />
             </div>
@@ -223,6 +314,8 @@ function ComposePanel({
   selectedPlatforms,
   postTagsByPlatform,
   postMediaByPlatform,
+  postSchedulesByPlatform,
+  publishStatusesByPlatform,
   onCopyChange,
   onSelectPlatform,
   onExpandPlatform,
@@ -233,6 +326,8 @@ function ComposePanel({
   onRemoveTag,
   onAddMedia,
   onRemoveMedia,
+  onUpdateSchedule,
+  onPublishNow,
 }: {
   selectedPlatformName: PlatformName;
   expandedPlatformName: PlatformName;
@@ -241,6 +336,8 @@ function ComposePanel({
   selectedPlatforms: Record<PlatformName, boolean>;
   postTagsByPlatform: Record<PlatformName, string[]>;
   postMediaByPlatform: Record<PlatformName, string[]>;
+  postSchedulesByPlatform: Record<PlatformName, PlatformSchedule>;
+  publishStatusesByPlatform: Record<PlatformName, PlatformPublishStatus>;
   onCopyChange: (platformName: PlatformName, copy: string) => void;
   onSelectPlatform: (platformName: PlatformName) => void;
   onExpandPlatform: (platformName: PlatformName) => void;
@@ -251,6 +348,8 @@ function ComposePanel({
   onRemoveTag: (platformName: PlatformName, tag: string) => void;
   onAddMedia: (platformName: PlatformName, files: FileList | null) => void;
   onRemoveMedia: (platformName: PlatformName, index: number) => void;
+  onUpdateSchedule: (platformName: PlatformName, schedule: Partial<PlatformSchedule>) => void;
+  onPublishNow: (platformName: PlatformName) => void;
 }) {
   const [platformMenuOpen, setPlatformMenuOpen] = useState(false);
   const platformMenuRef = useRef<HTMLDivElement | null>(null);
@@ -324,6 +423,8 @@ function ComposePanel({
             active={activePlatforms[platform.name]}
             tags={postTagsByPlatform[platform.name]}
             media={postMediaByPlatform[platform.name]}
+            schedule={postSchedulesByPlatform[platform.name]}
+            publishStatus={publishStatusesByPlatform[platform.name]}
             expanded={expandedPlatformName === platform.name}
             selected={selectedPlatformName === platform.name}
             onCopyChange={(copy) => onCopyChange(platform.name, copy)}
@@ -334,6 +435,8 @@ function ComposePanel({
             onRemoveTag={(tag) => onRemoveTag(platform.name, tag)}
             onAddMedia={(files) => onAddMedia(platform.name, files)}
             onRemoveMedia={(index) => onRemoveMedia(platform.name, index)}
+            onUpdateSchedule={(schedule) => onUpdateSchedule(platform.name, schedule)}
+            onPublishNow={() => onPublishNow(platform.name)}
           />
         ))}
       </div>
@@ -347,6 +450,8 @@ function PlatformComposer({
   active,
   tags,
   media,
+  schedule,
+  publishStatus,
   expanded,
   selected,
   onCopyChange,
@@ -357,12 +462,16 @@ function PlatformComposer({
   onRemoveTag,
   onAddMedia,
   onRemoveMedia,
+  onUpdateSchedule,
+  onPublishNow,
 }: {
   platform: PlatformConfig;
   copy: string;
   active: boolean;
   tags: string[];
   media: string[];
+  schedule: PlatformSchedule;
+  publishStatus: PlatformPublishStatus;
   expanded: boolean;
   selected: boolean;
   onCopyChange: (copy: string) => void;
@@ -373,6 +482,8 @@ function PlatformComposer({
   onRemoveTag: (tag: string) => void;
   onAddMedia: (files: FileList | null) => void;
   onRemoveMedia: (index: number) => void;
+  onUpdateSchedule: (schedule: Partial<PlatformSchedule>) => void;
+  onPublishNow: () => void;
 }) {
   const [tagDraft, setTagDraft] = useState('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -391,15 +502,14 @@ function PlatformComposer({
 
   return (
     <article className={cx('bg-white transition', selected && 'bg-[#FBFAFF]')}>
-      <button type="button" onClick={onSelect} className="flex w-full items-center gap-3 px-5 py-4 text-left">
+      <div className="flex w-full items-center gap-3 px-5 py-4 text-left">
         <img src={platform.logo.src} alt="" aria-hidden="true" className="size-6 shrink-0" />
-        <h3 className="min-w-0 flex-1 truncate text-[15px] font-bold text-[#0F172A]">{platform.name}</h3>
+        <button type="button" onClick={onSelect} className="min-w-0 flex-1 truncate text-left text-[15px] font-bold text-[#0F172A]">
+          {platform.name}
+        </button>
         <button
           type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            onToggleActive();
-          }}
+          onClick={onToggleActive}
           aria-label={`${active ? 'Disable' : 'Enable'} ${platform.name}`}
           className={cx('relative h-5 w-9 rounded-full transition', active ? 'bg-[#51C66B]' : 'bg-[#CBD5E1]')}
         >
@@ -407,16 +517,13 @@ function PlatformComposer({
         </button>
         <button
           type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            onToggleExpand();
-          }}
+          onClick={onToggleExpand}
           aria-label={`${expanded ? 'Collapse' : 'Expand'} ${platform.name}`}
           className="grid size-8 place-items-center rounded-[8px] text-[#334155] hover:bg-[#F8FAFC]"
         >
           <ChevronDown className={cx('size-4 transition', expanded && 'rotate-180')} />
         </button>
-      </button>
+      </div>
 
       {expanded ? (
         <div className="space-y-4 px-5 pb-5">
@@ -489,6 +596,8 @@ function PlatformComposer({
               <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple className="sr-only" onChange={handleMediaChange} />
             </div>
           </div>
+
+          <SchedulePanel schedule={schedule} publishStatus={publishStatus} onChange={onUpdateSchedule} onPublishNow={onPublishNow} />
             </>
           )}
         </div>
@@ -607,8 +716,6 @@ function PreviewPanel({
         </div>
         <p className="mt-3 text-center text-[11px] font-medium text-[#94A3B8]">* ตัวอย่างอาจแตกต่างจากการแสดงผลจริงในแต่ละแพลตฟอร์ม</p>
       </div>
-
-      <SchedulePanel />
     </section>
   );
 }
@@ -686,70 +793,126 @@ function SocialPreview({ selectedPlatformName, postCopy, media }: { selectedPlat
   );
 }
 
-function SchedulePanel() {
+function SchedulePanel({
+  schedule,
+  publishStatus,
+  onChange,
+  onPublishNow,
+}: {
+  schedule: PlatformSchedule;
+  publishStatus: PlatformPublishStatus;
+  onChange: (schedule: Partial<PlatformSchedule>) => void;
+  onPublishNow: () => void;
+}) {
+  const isScheduled = schedule.mode === 'scheduled';
+  const isPosting = publishStatus.state === 'posting';
+
   return (
-    <div className="border-t border-[#E2E8F0] bg-white p-4">
-      <div className="rounded-[12px] border border-[#E2E8F0] bg-white p-4">
-        <h3 className="mb-4 text-[15px] font-bold text-[#0F172A]">ตั้งเวลาการโพสต์</h3>
-        <div className="grid gap-5 lg:grid-cols-[minmax(160px,0.62fr)_minmax(320px,1fr)] lg:items-start">
-          <div className="space-y-2.5 pt-1">
-            <label className="flex min-h-9 items-center gap-3 text-[13px] font-semibold text-[#334155]">
-              <span className="grid size-5 place-items-center rounded-full border border-[#6C63FF] bg-[#6C63FF] text-white">
-                <Check className="size-3.5" />
-              </span>
-              โพสต์เลย
-            </label>
-            <label className="flex min-h-9 items-center gap-3 text-[13px] font-semibold text-[#334155]">
-              <span className="size-5 rounded-full border border-[#CBD5E1] bg-white" />
-              กำหนดเวลา
-            </label>
-          </div>
-
-          <div className="grid gap-3">
-            <label className="block">
-              <span className="mb-1.5 block text-[12px] font-bold text-[#334155]">โซนเวลา</span>
-              <button className="flex h-10 w-full items-center justify-between rounded-[8px] border border-[#D8DEE9] bg-white px-3 text-[13px] font-semibold text-[#334155] transition hover:border-[#B9C5FF]">
-                (GMT+7) Bangkok
-                <ChevronDown className="size-4 text-[#64748B]" />
-              </button>
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block">
-                <span className="mb-1.5 block text-[12px] font-bold text-[#334155]">วันที่</span>
-                <button className="flex h-10 w-full items-center justify-between rounded-[8px] border border-[#D8DEE9] bg-white px-3 text-[13px] font-semibold text-[#334155] transition hover:border-[#B9C5FF]">
-                  26/05/2025
-                  <Calendar className="size-4 text-[#64748B]" />
-                </button>
-              </label>
-              <label className="block">
-                <span className="mb-1.5 block text-[12px] font-bold text-[#334155]">เวลา</span>
-                <button className="flex h-10 w-full items-center justify-between rounded-[8px] border border-[#D8DEE9] bg-white px-3 text-[13px] font-semibold text-[#334155] transition hover:border-[#B9C5FF]">
-                  10:00
-                  <Clock3 className="size-4 text-[#64748B]" />
-                </button>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-5 grid gap-3 lg:grid-cols-[160px_minmax(180px,1fr)_48px_172px] lg:items-center">
-          <button className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-[10px] bg-[#F4F6FA] px-4 text-[13px] font-bold text-[#334155] transition hover:bg-[#EDEFF5]">
-            <ArrowLeft className="size-4" />
-            ย้อนกลับ
-          </button>
-          <button className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-[10px] bg-gradient-to-r from-[#7B61FF] to-[#5B5DF6] px-5 text-[13px] font-bold text-white shadow-[0_14px_26px_rgba(91,80,230,0.20)] transition hover:brightness-105 active:scale-[0.99]">
-            <Send className="size-4" />
+    <section className="rounded-[12px] border border-[#E2E8F0] bg-[#FBFCFF] p-4">
+      <h3 className="mb-4 text-[15px] font-bold text-[#0F172A]">ตั้งเวลาการโพสต์</h3>
+      <div className="grid gap-4 lg:grid-cols-[170px_minmax(0,1fr)] lg:items-start">
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => onChange({ mode: 'now' })}
+            className="flex min-h-9 w-full items-center gap-3 rounded-[8px] px-1 text-left text-[13px] font-semibold text-[#334155] transition hover:bg-white"
+          >
+            <span className={cx('grid size-5 place-items-center rounded-full border', !isScheduled ? 'border-[#6C63FF] bg-[#6C63FF] text-white' : 'border-[#CBD5E1] bg-white text-transparent')}>
+              <Check className="size-3.5" />
+            </span>
             โพสต์เลย
           </button>
-          <button aria-label="More publish options" className="grid size-11 place-items-center rounded-[10px] bg-[#5B5DF6] text-white transition hover:brightness-105 active:scale-[0.99]">
-            <ChevronDown className="size-5" />
-          </button>
-          <button className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-[10px] border border-transparent px-3 text-[13px] font-semibold text-[#64748B] transition hover:border-[#E2E8F0] hover:bg-[#F8FAFC]">
-            <Bookmark className="size-4 shrink-0" />
-            <span className="truncate">บันทึกเป็นแบบร่าง</span>
+          <button
+            type="button"
+            onClick={() => onChange({ mode: 'scheduled' })}
+            className="flex min-h-9 w-full items-center gap-3 rounded-[8px] px-1 text-left text-[13px] font-semibold text-[#334155] transition hover:bg-white"
+          >
+            <span className={cx('grid size-5 place-items-center rounded-full border', isScheduled ? 'border-[#6C63FF] bg-[#6C63FF] text-white' : 'border-[#CBD5E1] bg-white text-transparent')}>
+              <Check className="size-3.5" />
+            </span>
+            กำหนดเวลา
           </button>
         </div>
+
+        <div className="grid gap-3">
+          <label className="block">
+            <span className="mb-1.5 block text-[12px] font-bold text-[#334155]">โซนเวลา</span>
+            <select
+              value={schedule.timezone}
+              onChange={(event) => onChange({ timezone: event.target.value })}
+              className="h-10 w-full rounded-[8px] border border-[#D8DEE9] bg-white px-3 text-[13px] font-semibold text-[#334155] outline-none transition hover:border-[#B9C5FF] focus:border-[#8B7BFF] focus:ring-4 focus:ring-[#7B61FF]/10"
+            >
+              <option>(GMT+7) Bangkok</option>
+              <option>(GMT+8) Singapore</option>
+              <option>(GMT+0) UTC</option>
+            </select>
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="mb-1.5 block text-[12px] font-bold text-[#334155]">วันที่</span>
+              <div className="relative">
+                <input
+                  type="date"
+                  value={schedule.date}
+                  onChange={(event) => onChange({ date: event.target.value, mode: 'scheduled' })}
+                  className="h-10 w-full rounded-[8px] border border-[#D8DEE9] bg-white px-3 pr-9 text-[13px] font-semibold text-[#334155] outline-none transition hover:border-[#B9C5FF] focus:border-[#8B7BFF] focus:ring-4 focus:ring-[#7B61FF]/10"
+                />
+                <Calendar className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[#64748B]" />
+              </div>
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-[12px] font-bold text-[#334155]">เวลา</span>
+              <div className="relative">
+                <input
+                  type="time"
+                  value={schedule.time}
+                  onChange={(event) => onChange({ time: event.target.value, mode: 'scheduled' })}
+                  className="h-10 w-full rounded-[8px] border border-[#D8DEE9] bg-white px-3 pr-9 text-[13px] font-semibold text-[#334155] outline-none transition hover:border-[#B9C5FF] focus:border-[#8B7BFF] focus:ring-4 focus:ring-[#7B61FF]/10"
+                />
+                <Clock3 className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[#64748B]" />
+              </div>
+            </label>
+          </div>
+        </div>
       </div>
-    </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_48px_minmax(150px,0.72fr)] sm:items-center">
+        <button
+          type="button"
+          onClick={onPublishNow}
+          disabled={isPosting}
+          className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-[10px] bg-gradient-to-r from-[#7B61FF] to-[#5B5DF6] px-5 text-[13px] font-bold text-white shadow-[0_14px_26px_rgba(91,80,230,0.20)] transition hover:brightness-105 active:scale-[0.99]"
+        >
+          <Send className="size-4" />
+          {isPosting ? 'กำลังโพสต์...' : isScheduled ? 'ตั้งเวลาโพสต์' : 'โพสต์เลย'}
+        </button>
+        <button type="button" aria-label="More publish options" className="grid size-11 place-items-center rounded-[10px] bg-[#5B5DF6] text-white transition hover:brightness-105 active:scale-[0.99]">
+          <ChevronDown className="size-5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange({ draftSaved: !schedule.draftSaved })}
+          className={cx(
+            'inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-[10px] border px-3 text-[13px] font-semibold transition',
+            schedule.draftSaved ? 'border-[#B9C5FF] bg-[#F3F1FF] text-[#5B5DF6]' : 'border-transparent text-[#64748B] hover:border-[#E2E8F0] hover:bg-white',
+          )}
+        >
+          <Bookmark className="size-4 shrink-0" />
+          <span className="truncate">{schedule.draftSaved ? 'บันทึกแล้ว' : 'บันทึกเป็นแบบร่าง'}</span>
+        </button>
+      </div>
+      {publishStatus.message ? (
+        <p
+          className={cx(
+            'mt-3 rounded-[8px] px-3 py-2 text-[12px] font-semibold',
+            publishStatus.state === 'success' && 'bg-[#ECFDF3] text-[#15803D]',
+            publishStatus.state === 'error' && 'bg-[#FEF2F2] text-[#B91C1C]',
+            publishStatus.state === 'posting' && 'bg-[#EEF2FF] text-[#4F46E5]',
+          )}
+        >
+          {publishStatus.message}
+        </p>
+      ) : null}
+    </section>
   );
 }

@@ -6,4 +6,7 @@ export const env = {
   facebookAppId: process.env.FACEBOOK_APP_ID,
   facebookAppSecret: process.env.FACEBOOK_APP_SECRET,
   facebookRedirectUri: process.env.FACEBOOK_REDIRECT_URI,
+  facebookAccessToken: process.env.FACEBOOK_ACCESS_TOKEN,
+  facebookPageAccessToken: process.env.FACEBOOK_PAGE_ACCESS_TOKEN,
+  facebookPageId: process.env.FACEBOOK_PAGE_ID,
 };
